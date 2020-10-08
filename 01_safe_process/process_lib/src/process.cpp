@@ -1,17 +1,17 @@
-#include "process.h"
-
 #include <string>
 #include <unistd.h> // pid_t
 #include <stdexcept> // std::runtime_error
 
+#include "../include/process.h"
 
 namespace PROCESS {
 
 
 Process::Process(const std::string& path) : path_(path) {
+
     int p1[2], p2[2];
-    pipe(p1);
-    pipe(p2);
+    safe_pipe(p1);
+    safe_pipe(p2);
 
     pid_ = fork();
     if (pid_ == 0) { // child process
@@ -23,7 +23,7 @@ Process::Process(const std::string& path) : path_(path) {
         ::close(p2[0]);
         ::close(p2[1]);
 
-        if (execl(path_.c_str(), path_.c_str(), NULL) < 0) {
+        if (execl(path_.c_str(), path_.c_str(), nullptr) < 0) {
             throw std::runtime_error("Invalid execl()");
         }
     }
@@ -44,15 +44,18 @@ Process::~Process() {
 }
 
 size_t Process::write(const void* data, size_t len) {
-    int numBytes = ::write(fdWrite_, data, len);
-    if (numBytes < 0) {
-        throw std::runtime_error("Invalid write()");
+    if (fdWrite_ != -1) {
+        ssize_t numBytes = ::write(fdWrite_, data, len);
+        if (numBytes < 0) {
+            throw std::runtime_error("Invalid write()");
+        }
+        return numBytes;
     }
-    return numBytes;
+    throw std::runtime_error("Write descriptor is closed");
 
 }
 void Process::writeExact(const void* data, size_t len) {
-    int curBytes = 0;
+    size_t curBytes = 0;
     while (curBytes != len) {
         const void* curData = static_cast<const char*>(data) + curBytes;
         curBytes += write(curData, len - curBytes);
@@ -60,11 +63,14 @@ void Process::writeExact(const void* data, size_t len) {
 }
 
 size_t Process::read(void* data, size_t len) {
-    int numBytes = ::read(fdRead_, data, len);
-    if (numBytes < 0) {
-        throw std::runtime_error("Invalid read()");
+    if (fdRead_ != -1) {
+        ssize_t numBytes = ::read(fdRead_, data, len);
+        if (numBytes < 0) {
+            throw std::runtime_error("Invalid read()");
+        }
+        return numBytes;
     }
-    return numBytes;
+    throw std::runtime_error("Read descriptor is closed");
 }
 
 void Process::readExact(void* data, size_t len) {
@@ -78,13 +84,20 @@ void Process::readExact(void* data, size_t len) {
 
 void Process::closeStdin() {
     ::close(fdWrite_);
+    fdWrite_ = -1;
 }
 
 void Process::close() {
     ::close(fdRead_);
     ::close(fdWrite_);
+    fdWrite_ = -1;
+    fdRead_ = -1;
+}
+
+void Process::safe_pipe(PipeType& fd) {
+    if (pipe(fd) < 0) {
+        throw std::runtime_error("Invalid pipe");
+    }
 }
 
 } // PROCESS
-
-

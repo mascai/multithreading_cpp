@@ -1,4 +1,4 @@
-#include "process.h"
+#include "process_lib/include/process.h"
 #include <iostream>
 
 
@@ -9,8 +9,9 @@ int main() {
         std::cin >> temp;
 
         proc.writeExact(temp.c_str(), temp.size());
-        char* buf = new char[temp.size()];
-        proc.readExact(buf, temp.size());
+        std::string buf;
+        buf.resize(temp.size());
+        proc.readExact(buf.data(), temp.size());
         std::cout << buf << std::endl;
     }
     return 0;
