@@ -1,6 +1,8 @@
 #include <string>
 #include <unistd.h> // pid_t
 #include <stdexcept> // std::runtime_error
+#include<sys/wait.h> // waitpid
+#include <signal.h>
 
 #include "../include/process.h"
 
@@ -8,7 +10,7 @@ namespace PROCESS {
 
 
 Process::Process(const std::string& path) : path_(path) {
-
+    readable_ = true;
     int p1[2], p2[2];
     safe_pipe(p1);
     safe_pipe(p2);
@@ -44,8 +46,8 @@ Process::~Process() {
 }
 
 size_t Process::write(const void* data, size_t len) {
-    if (fdWrite_ != -1) {
-        ssize_t numBytes = ::write(fdWrite_, data, len);
+    if (fdWrite_.getFd() != -1) {
+        ssize_t numBytes = ::write(fdWrite_.getFd(), data, len);
         if (numBytes < 0) {
             throw std::runtime_error("Invalid write()");
         }
@@ -63,10 +65,13 @@ void Process::writeExact(const void* data, size_t len) {
 }
 
 size_t Process::read(void* data, size_t len) {
-    if (fdRead_ != -1) {
-        ssize_t numBytes = ::read(fdRead_, data, len);
+    if (fdRead_.getFd() != -1) {
+        ssize_t numBytes = ::read(fdRead_.getFd(), data, len);
         if (numBytes < 0) {
             throw std::runtime_error("Invalid read()");
+        }
+        if (numBytes == 0) {
+            readable_ = false;
         }
         return numBytes;
     }
@@ -78,26 +83,50 @@ void Process::readExact(void* data, size_t len) {
     while (curBytes != len) {
         void* curData = static_cast<char*>(data) + curBytes;
         curBytes += read(curData, len - curBytes);
+        if (curBytes == 0) {
+            throw std::runtime_error("Read 0 bytes from buffer");
+        }
     }
 
 }
 
 void Process::closeStdin() {
-    ::close(fdWrite_);
+    ::close(fdWrite_.getFd());
     fdWrite_ = -1;
 }
 
 void Process::close() {
-    ::close(fdRead_);
-    ::close(fdWrite_);
+    int status;
+    kill(pid_,SIGINT);
+    pid_t cpid = waitpid(pid_, &status, 0);
+
     fdWrite_ = -1;
     fdRead_ = -1;
+    readable_ = false;
+}
+
+bool Process::is_readable() const {
+    return readable_;
 }
 
 void Process::safe_pipe(PipeType& fd) {
     if (pipe(fd) < 0) {
         throw std::runtime_error("Invalid pipe");
     }
+}
+
+Descriptor::Descriptor(int fd) : fd_(fd) {}
+
+Descriptor::~Descriptor() {
+    ::close(fd_);
+}
+
+int Descriptor::getFd() const {
+    return fd_;
+}
+
+void Descriptor::operator=(int fd) {
+  fd_ = fd;
 }
 
 } // PROCESS
