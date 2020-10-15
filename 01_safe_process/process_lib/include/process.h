@@ -11,6 +11,7 @@ public:
     ~Descriptor(); // after the destructor, ownership is transferred to the containing class
     int getFd() const;
     void operator=(int fd);
+    void close();
 private:
     int fd_;
 };

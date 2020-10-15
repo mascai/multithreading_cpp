@@ -91,17 +91,15 @@ void Process::readExact(void* data, size_t len) {
 }
 
 void Process::closeStdin() {
-    ::close(fdWrite_.getFd());
-    fdWrite_ = -1;
+    fdWrite_.close();
 }
 
 void Process::close() {
     int status;
     kill(pid_,SIGINT);
     pid_t cpid = waitpid(pid_, &status, 0);
-
-    fdWrite_ = -1;
-    fdRead_ = -1;
+    fdWrite_.close();
+    fdRead_.close();
     readable_ = false;
 }
 
@@ -118,7 +116,7 @@ void Process::safe_pipe(PipeType& fd) {
 Descriptor::Descriptor(int fd) : fd_(fd) {}
 
 Descriptor::~Descriptor() {
-    ::close(fd_);
+    close();
 }
 
 int Descriptor::getFd() const {
@@ -127,6 +125,11 @@ int Descriptor::getFd() const {
 
 void Descriptor::operator=(int fd) {
   fd_ = fd;
+}
+
+void Descriptor::close() {
+    ::close(fd_);
+    fd_ = -1;
 }
 
 } // PROCESS
