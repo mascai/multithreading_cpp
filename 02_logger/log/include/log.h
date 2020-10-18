@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 
 namespace LOG {
@@ -13,7 +15,7 @@ enum class LogLevel {
 class BaseLogger {
 public:
     BaseLogger(LogLevel level);
-    ~BaseLogger() = default;
+    virtual ~BaseLogger() {};
 
     void debug(const std::string& s);
     void info(const std::string& s);
@@ -33,19 +35,7 @@ private:
 };
 
 
-/* TODO: singleton
-class Logger : public BaseLogger {
-public:
-    static Logger& get_instance();
-    std::shared_ptr<BaseLogger> get_global_logger() const;
-    void set_global_logger(std::shared_ptr<BaseLogger>r logger);
-private:
-    Logger() = default;
-    ~Logger() = default;
-    Logger(const Logger& other) = delete;
-    Logger& operator=(const Logger& other) = delete;
-private:
-    std::shared_ptr<BaseLogger> global_logger;
-};*/
+
+
 
 } // LOG
