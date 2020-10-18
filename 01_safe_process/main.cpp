@@ -1,5 +1,6 @@
-#include "process_lib/include/process.h"
 #include <iostream>
+
+#include "process.h"
 
 
 int main() {

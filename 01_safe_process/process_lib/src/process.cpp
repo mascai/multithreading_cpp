@@ -4,7 +4,7 @@
 #include<sys/wait.h> // waitpid
 #include <signal.h>
 
-#include "../include/process.h"
+#include "process.h"
 
 namespace PROCESS {
 
