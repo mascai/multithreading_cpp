@@ -6,9 +6,9 @@ project(Logger)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-include_directories(log/include/)
+add_subdirectory(log)
 
-add_library(log_lib log/src/log.cpp log/src/FileLogger.cpp log/src/StdoutLogger.cpp log/src/StderrLogger.cpp)
+target_include_directories(log_lib PUBLIC log/include)
 
 add_executable(demo main.cpp)
 target_link_libraries(demo log_lib)
