@@ -11,7 +11,7 @@ class Connection {
 public:
     friend class Server;
 
-    Connection(const std::string& host = "127.0.0.1", int port = 8001);
+    explicit Connection(const std::string& host = "127.0.0.1", int port = 8001);
     Connection(Descriptor fd, const sockaddr_in& sockAddr);
     ~Connection() noexcept;
 
