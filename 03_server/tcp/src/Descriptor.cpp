@@ -11,20 +11,27 @@ Descriptor::~Descriptor() {
 }
 
 Descriptor::Descriptor(Descriptor&& other) {
-    fd_ = other.fd_;
-    other.fd_ = -1;
+    if (fd_ != other.fd_) {
+        ::close(fd_);
+        fd_ = other.fd_;
+    }
+
 }
 
 int Descriptor::getValue() const {
     return fd_;
 }
 
-int Descriptor::setValue(int fd) {
-    fd_ = fd;
+void Descriptor::setValue(int fd) {
+    if (fd_ != fd) {
+        ::close(fd_);
+        fd_ = fd;
+    }
 }
 
 Descriptor& Descriptor::operator=(int fd) {
-    fd_ = fd;
+    setValue(fd);
+    return *this;
 }
 
 void Descriptor::close() {

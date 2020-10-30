@@ -9,7 +9,7 @@ public:
     Descriptor(Descriptor&& other);
 
     int getValue() const;
-    int setValue(int fd);
+    void setValue(int fd);
     Descriptor& operator=(int fd);
 
     void close();

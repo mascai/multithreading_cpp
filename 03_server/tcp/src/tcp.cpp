@@ -43,7 +43,7 @@ Connection::Connection(Descriptor fd, const sockaddr_in& sockAddr)
     , port_(sockAddr.sin_port)
     , isOpen_(true) {
 
-     descriptor_.setValue(fd.getValue());
+     descriptor_.setValue(std::move(fd.getValue()));
      fd.setValue(-1);
 
     inet_ntop(AF_INET,
