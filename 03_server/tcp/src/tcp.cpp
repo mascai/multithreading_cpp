@@ -9,13 +9,14 @@
 #include <unistd.h>
 
 #include "tcp.h"
+#include "Exception.h"
 
 
 namespace TCP {
 
 static void check_error(int fd, const std::string errorMessage) {
     if (fd < 0) {
-        throw std::runtime_error(errorMessage);
+        throw Exception(errorMessage);
     }
 }
 
@@ -91,11 +92,11 @@ size_t Connection::write(const void* data, size_t len) {
     if (descriptor_.getValue() != -1) {
         ssize_t numBytes = ::write(descriptor_.getValue(), data, len);
         if (numBytes < 0) {
-            throw std::runtime_error("Invalid write()");
+            throw Exception("Invalid write()");
         }
         return numBytes;
     }
-    throw std::runtime_error("Write descriptor is closed");
+    throw Exception("Write descriptor is closed");
 }
 
 void Connection::writeExact(const void* data, size_t len) {
@@ -110,11 +111,11 @@ size_t Connection::read(void* data, size_t len) {
     if (descriptor_.getValue() != -1) {
         ssize_t numBytes = ::read(descriptor_.getValue(), data, len);
         if (numBytes < 0) {
-            throw std::runtime_error("Invalid read()");
+            throw Exception("Invalid read()");
         }
         return numBytes;
     }
-    throw std::runtime_error("Read descriptor is closed");
+    throw Exception("Read descriptor is closed");
 }
 
 void Connection::readExact(void* data, size_t len) {
@@ -136,7 +137,7 @@ void Connection::setTimeout(int numSeconds) {
         &timeVal,
         sizeof(timeVal)) != 0) {
 
-        throw std::runtime_error("Error setsockopt");
+        throw Exception("Error setsockopt");
     }
 }
 
@@ -162,11 +163,11 @@ void Server::open(const std::string& host, int port, int maxConnections) {
     sockdata.sin_port = ::htons(port);
     if (::inet_aton(host.c_str(), &sockdata.sin_addr) == 0) {
         close();
-        throw std::runtime_error("Invalid host or port");
+        throw Exception("Invalid host or port");
     }
     if (::bind(descriptor_.getValue(), reinterpret_cast<sockaddr*>(&sockdata), sizeof(sockdata)) != 0) {
         close();
-        throw std::runtime_error("Error binding socket");
+        throw Exception("Error binding socket");
     }
     isOpen_ = true;
     setMaxConnections(maxConnections);
@@ -192,7 +193,7 @@ void Server::close() {
 
 void Server::setMaxConnections(int n) {
     if (::listen(descriptor_.getValue(), n) != 0) {
-        throw std::runtime_error("Error in ::listen");
+        throw Exception("Error in ::listen");
     }
 }
 
